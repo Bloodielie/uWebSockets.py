@@ -1,0 +1,50 @@
+typedef struct {
+    PyObject_HEAD
+	uWS::HttpResponse<false> *res;
+    double whatever;
+} HttpResponseObject;
+
+static PyObject *HttpResponse_end(HttpResponseObject *self, PyObject *args) {
+
+	PyObject *one;
+	PyArg_ParseTuple(args, "O", &one);
+
+	// string to utf8
+	Py_ssize_t size;
+	const char *str = PyUnicode_AsUTF8AndSize(one, &size);
+	std::string_view message(str, size);
+
+	self->res->end(message);
+	return Py_None;
+}
+
+static PyObject *HttpResponse_writeHeader(HttpResponseObject *self, PyObject *args) {
+
+	PyObject *one;
+	PyArg_ParseTuple(args, "O", &one);
+
+	// string to utf8
+	Py_ssize_t size;
+	const char *str = PyUnicode_AsUTF8AndSize(one, &size);
+	std::string_view message(str, size);
+
+	self->res->end(message);
+	return Py_None;
+}
+
+// HttpResponse method list
+static PyMethodDef HttpResponse_methods[] = {
+    {"end", (PyCFunction) HttpResponse_end, METH_VARARGS, "no doc"},
+    {NULL}
+};
+
+static PyTypeObject HttpResponseType = {
+    PyVarObject_HEAD_INIT(NULL, 0)
+    .tp_name = "HttpResponse",
+    .tp_basicsize = sizeof(HttpResponseObject),
+    .tp_itemsize = 0,
+    .tp_flags = Py_TPFLAGS_DEFAULT,
+    .tp_doc = "no doc",
+    .tp_methods = HttpResponse_methods,
+    .tp_new = PyType_GenericNew,
+};

@@ -5,63 +5,35 @@ The idea here is to ultimately provide a seamless, pip install kind of works-out
 
 This extension already outperforms Japronto, but will of course have a much more mature feature set. Here's what works right now:
 ```python
-# Questionable module name
 import uwebsocketspy as uWS
 
-port = 4000
+app = uWS.App()
 
-# the app
-app = uWS.App({
-        "some": "option"
-})
+def httpGet(res, req):
+	res.end("Sorry, no HTTP for you this time")
 
-# register http get
-def getHandler(res, req):
-        res.end("Hello Python!")
+app.get("/*", httpGet)
 
-app.get("/*", getHandler)
-
-# register http post
-def postHandler(res, req):
-        res.end("Hello POST!")
-
-app.post("/*", postHandler)
-
-# register candy
-def candyHandler(res, req):
-    res.end("Candy candy!");
-
-app.get("/candy", candyHandler);
-
-# register websockets
 def wsOpen(ws, req):
-	ws.send("I'm alive!");
-	print("new websocket!")
-
-def wsClose(ws, code, message):
-	print("websocket gone!")
-
-def wsDrain():
-	print("websocket drain")
+	print("Welcome customer!");
 
 def wsMessage(ws, message, isBinary):
 	ws.send(message)
 
+def wsClose(ws, code, message):
+	print("Aw, we lost a customer");
+
 app.ws("/*", {
 	"maxPayloadLength": 1024,
 	"open": wsOpen,
-	"close": wsClose,
 	"message": wsMessage,
-	"drain": wsDrain
+	"close": wsClose
 });
 
-# listen
 def listenHandler():
-        print("Listening to port " + str(port))
+        print("Listening to port 3000")
 
-app.listen("localhost", port, listenHandler)
+app.listen(3000, listenHandler)
 
-# Note: Will block asyncio for now, should integrate seamlessly with uvloop later on
 app.run()
-
 ```

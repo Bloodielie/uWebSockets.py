@@ -5,6 +5,7 @@
 #include <iostream>
 
 #include "HttpResponseWrapper.h"
+#include "WebSocketWrapper.h"
 #include "AppWrapper.h"
 
 /* Module definition */
@@ -24,9 +25,13 @@ PyMODINIT_FUNC PyInit_uwebsocketspy() {
 
     Py_INCREF(&HttpResponseType);
     Py_INCREF(&AppType);
+    Py_INCREF(&WebSocketType);
 
     /* Ready all types */
     if (PyType_Ready(&AppType) < 0)
+        return NULL;
+
+    if (PyType_Ready(&WebSocketType) < 0)
         return NULL;
 
     if (PyType_Ready(&HttpResponseType) < 0)

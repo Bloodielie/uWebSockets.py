@@ -1,7 +1,6 @@
 typedef struct {
     PyObject_HEAD
 	uWS::HttpResponse<false> *res;
-    double whatever;
 } HttpResponseObject;
 
 static PyObject *HttpResponse_end(HttpResponseObject *self, PyObject *args) {

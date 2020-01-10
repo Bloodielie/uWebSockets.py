@@ -1,5 +1,9 @@
 # µWebSockets.py
-**WIP extension for µWebSockets**
+This is a work-in-progress Python extension much like the Node.js addon µWebSockets.js. It performs very nicely, even outrunning the Node.js addon already, by a quite large margin. Python is an excellent interpreter with a lean and unforgiving C API that sure doesn't let me down.
+
+The idea here is to ultimately provide a seamless, pip install kind of works-out-of-the-box experience but for Python developers.
+
+This extension already outperforms Japronto, but will of course have a much more mature feature set. Here's what works right now:
 ```python
 # Questionable module name
 import uwebsocketspy as uWS
@@ -61,4 +65,3 @@ app.listen("localhost", port, listenHandler)
 app.run()
 
 ```
-It performs significantly better than japronto, despite being a far more complete and mature project.

@@ -9,15 +9,8 @@
 
 </div>
 
-#### Ready all thrusters
-
-For a performance reference, consider [Japronto performance graph](https://github.com/squeaky-pl/japronto#performance), then consider the following graph:
-
-![](misc/perf.png)
-
-The idea here is to ultimately provide a seamless, pip install kind of works-out-of-the-box experience but for Python developers.
-
 #### In a nutshell
+
 µWebSockets is a C++ web server and broker made available to JavaScript developers since 2016, now also available to Python developers. It integrates seamlessly to any `asyncio` project as long as `uvloop` is set up and used as event loop.
 
 ```python
@@ -41,3 +34,11 @@ def listenHandler():
 
 app.listen(3000, listenHandler)
 ```
+
+#### Ready all thrusters
+
+For a performance reference, consider [Japronto performance graph](https://github.com/squeaky-pl/japronto#performance), then consider the following graph:
+
+![](misc/perf.png)
+
+The idea here is to ultimately provide a seamless, pip install kind of works-out-of-the-box experience but for Python developers.

@@ -9,6 +9,9 @@
 
 </div>
 
+#### In a nutshell
+µWebSockets is a C++ web server and broker made available to JavaScript developers since 2016, now also available to Python developers. It integrates seamlessly to any `asyncio` project as long as `uvloop` is set up and used as event loop.
+
 This is a **work-in-progress** Python extension much like the Node.js counterpart `µWebSockets.js`. It performs very favorably, outrunning both µWebSockets.js and Japronto by significant amount:
 
 ![](misc/perf.png)

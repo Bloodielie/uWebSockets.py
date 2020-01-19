@@ -37,8 +37,8 @@ app.listen(3000, listenHandler)
 
 #### Ready all thrusters
 
+`pip install uWebSockets.py`
+
 For a performance reference, consider [Japronto performance graph](https://github.com/squeaky-pl/japronto#performance), then the following graph:
 
 ![](misc/perf.png)
-
-The idea here is to ultimately provide a seamless, pip install kind of works-out-of-the-box experience but for Python developers.

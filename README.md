@@ -9,19 +9,18 @@
 
 </div>
 
-#### In a nutshell
-µWebSockets is a C++ web server and broker made available to JavaScript developers since 2016, now also available to Python developers. It integrates seamlessly to any `asyncio` project as long as `uvloop` is set up and used as event loop.
+#### Ready all thrusters
 
-This is a **work-in-progress** Python extension much like the Node.js counterpart `µWebSockets.js`. It performs very favorably, outrunning both µWebSockets.js and Japronto by significant amount:
+For a performance reference, consider [Japronto performance graph](https://github.com/squeaky-pl/japronto#performance), then consider the following graph:
 
 ![](misc/perf.png)
 
 The idea here is to ultimately provide a seamless, pip install kind of works-out-of-the-box experience but for Python developers.
 
-Here's what works right now:
-```python
-import uwebsocketspy as uWS
+#### In a nutshell
+µWebSockets is a C++ web server and broker made available to JavaScript developers since 2016, now also available to Python developers. It integrates seamlessly to any `asyncio` project as long as `uvloop` is set up and used as event loop.
 
+```python
 app = uWS.App()
 
 def httpGet(res, req):
@@ -29,26 +28,16 @@ def httpGet(res, req):
 
 app.get("/*", httpGet)
 
-def wsOpen(ws, req):
-	print("Welcome customer!");
-
 def wsMessage(ws, message, isBinary):
 	ws.send(message)
 
-def wsClose(ws, code, message):
-	print("Aw, we lost a customer");
-
 app.ws("/*", {
 	"maxPayloadLength": 1024,
-	"open": wsOpen,
-	"message": wsMessage,
-	"close": wsClose
+	"message": wsMessage
 });
 
 def listenHandler():
         print("Listening to port 3000")
 
 app.listen(3000, listenHandler)
-
-app.run()
 ```

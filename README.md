@@ -1,5 +1,7 @@
 # µWebSockets.py
-This is a work-in-progress Python extension much like the Node.js counterpart `µWebSockets.js`. It performs very favorably, outrunning both uWebSockets.js and Japronto by significant amount.
+This is a work-in-progress Python extension much like the Node.js counterpart `µWebSockets.js`. It performs very favorably, outrunning both µWebSockets.js and Japronto by significant amount:
+
+![](perf.png)
 
 The idea here is to ultimately provide a seamless, pip install kind of works-out-of-the-box experience but for Python developers.
 

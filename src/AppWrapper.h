@@ -69,7 +69,7 @@ static PyObject *App_f(AppObject *self, PyObject *args) {
         reqObjSelf->req = req;
 
         /* Call python */
-        PyObject *call = PyObject_CallFunction(callback, "OO", resObjSelf, reqObjSelf);
+        PyObject *call = PyObject_CallFunctionObjArgs(callback, resObjSelf, reqObjSelf, NULL);
         if (!call) {
             PyErr_Print();
         }
@@ -169,11 +169,20 @@ static PyObject *App_ws(AppObject *self, PyObject *args) {
 
                         PerSocketData *perSocketData = (PerSocketData *) ws->getUserData();
 
+                        /*Py_buffer buffer = {
+                            (void *) message.data(), NULL, message.length()
+                        };
+
                         // is a copy, don't do this! pass a buffer! and neuter it on return
+                        PyObject *pythonMessage = PyMemoryView_FromBuffer(&buffer);*/
+                        
+                        
                         PyObject *pythonMessage = PyUnicode_FromStringAndSize(message.data(), message.length());
 
+
+
                         // construct the ws and req wrappers here
-                        PyObject_CallFunction(value, "OOO", perSocketData->self, pythonMessage, value);
+                        PyObject_CallFunctionObjArgs(value, perSocketData->self, pythonMessage, value, NULL);
 
 
                         Py_DECREF(pythonMessage);

@@ -6,7 +6,7 @@ app = uWS.App({
 })
 
 def getHandler(res, req):
-	res.end("Hello Python!")
+	res.fastEnd("Hello Python!")
 
 app.get("/*", getHandler)
 

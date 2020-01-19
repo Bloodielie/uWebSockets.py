@@ -17,6 +17,20 @@ static PyObject *HttpResponse_end(HttpResponseObject *self, PyObject *args) {
 	return Py_None;
 }
 
+// fast call
+static PyObject *HttpResponse_fastEnd(HttpResponseObject *self, PyObject **args, int nargs) {
+
+	PyObject *one = args[0];
+
+	// string to utf8
+	Py_ssize_t size;
+	const char *str = PyUnicode_AsUTF8AndSize(one, &size);
+	std::string_view message(str, size);
+
+	self->res->end(message);
+	return Py_None;
+}
+
 static PyObject *HttpResponse_writeHeader(HttpResponseObject *self, PyObject *args) {
 
 	PyObject *key, *value;
@@ -37,6 +51,7 @@ static PyObject *HttpResponse_writeHeader(HttpResponseObject *self, PyObject *ar
 // HttpResponse method list
 static PyMethodDef HttpResponse_methods[] = {
     {"end", (PyCFunction) HttpResponse_end, METH_VARARGS, "no doc"},
+	{"fastEnd", (PyCFunction) HttpResponse_fastEnd, METH_FASTCALL, "no doc"},
 	{"writeHeader", (PyCFunction) HttpResponse_writeHeader, METH_VARARGS, "no doc"},
     {NULL}
 };

@@ -7,25 +7,29 @@ static PyObject *WebSocket_end(WebSocketObject *self, PyObject *args) {
 	return Py_None;
 }
 
-static PyObject *WebSocket_send(WebSocketObject *self, PyObject *args) {
+static PyObject *WebSocket_send(WebSocketObject *self, PyObject **args, int nargs) {
 
-	PyObject *pythonMessage;
-	PyArg_ParseTuple(args, "O", &pythonMessage);
+	PyObject *pythonMessage = args[0];
 
 	// string to utf8
 	Py_ssize_t size;
 	const char *str = PyUnicode_AsUTF8AndSize(pythonMessage, &size);
 	std::string_view message(str, size);
 
-    //std::cout << message << std::endl;
+    // bara om redan utf8
+    //auto *utf8 = PyUnicode_DATA(pythonMessage);
+    //Py_ssize_t size = PyUnicode_GetLength(pythonMessage);
 
-	self->ws->send(message, uWS::OpCode::TEXT);
+    //Py_buffer *buffer = PyMemoryView_GET_BUFFER(pythonMessage);
+	//self->ws->send({(char *) buffer->buf, buffer->len}, uWS::OpCode::TEXT);
+
+    self->ws->send({str, size}, uWS::OpCode::TEXT);
 	return Py_None;
 }
 
 static PyMethodDef WebSocket_methods[] = {
     {"end", (PyCFunction) WebSocket_end, METH_VARARGS, "no doc"},
-    {"send", (PyCFunction) WebSocket_send, METH_VARARGS, "no doc"},
+    {"send", (PyCFunction) WebSocket_send, METH_FASTCALL, "no doc"},
     {NULL}
 };
 

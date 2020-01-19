@@ -37,7 +37,7 @@ app.listen(3000, listenHandler)
 
 #### Ready all thrusters
 
-For a performance reference, consider [Japronto performance graph](https://github.com/squeaky-pl/japronto#performance), then consider the following graph:
+For a performance reference, consider [Japronto performance graph](https://github.com/squeaky-pl/japronto#performance), then the following graph:
 
 ![](misc/perf.png)
 

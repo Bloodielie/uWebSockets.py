@@ -10,7 +10,8 @@ app = uWS.App({
 
 # register http get
 def getHandler(res, req):
-        res.end("Hello Python!")
+	res.writeHeader('python', 'here')
+	res.end("Hello Python!")
 
 app.get("/*", getHandler)
 
@@ -22,6 +23,7 @@ app.post("/*", postHandler)
 
 # register candy
 def candyHandler(res, req):
+    req.getHeader('user-agent')
     res.end("Candy candy!");
 
 app.get("/candy", candyHandler);

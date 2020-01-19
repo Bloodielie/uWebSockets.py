@@ -58,25 +58,25 @@ static PyObject *App_f(AppObject *self, PyObject *args) {
     (self->app->*F)(pattern, [callback](auto *res, auto *req) {
         /* Create the HttpResponse */
         Py_INCREF(&HttpResponseType);
-        HttpResponseObject *obj = PyObject_New(HttpResponseObject, &HttpResponseType);
-        PyObject *resObj = PyObject_Init((PyObject *) obj, &HttpResponseType);
-        obj->res = res;
+        HttpResponseObject *resObjSelf = PyObject_New(HttpResponseObject, &HttpResponseType);
+        //PyObject *resObj = PyObject_Init((PyObject *) resObjSelf, &HttpResponseType);
+        resObjSelf->res = res;
 
         /* Create the HttpRequest */
         Py_INCREF(&HttpResponseType);
-        HttpResponseObject *obj2 = PyObject_New(HttpResponseObject, &HttpResponseType);
-        PyObject *reqObj = PyObject_Init((PyObject *) obj2, &HttpResponseType);
-        obj2->res = res;
+        HttpRequestObject *reqObjSelf = PyObject_New(HttpRequestObject, &HttpRequestType);
+        //PyObject *reqObj = PyObject_Init((PyObject *) reqObjSelf, &HttpRequestType);
+        reqObjSelf->req = req;
 
         /* Call python */
-        PyObject *call = PyObject_CallFunction(callback, "OO", resObj, resObj);
+        PyObject *call = PyObject_CallFunction(callback, "OO", resObjSelf, reqObjSelf);
         if (!call) {
             PyErr_Print();
         }
 
         /* Decrement reference counts */
-        Py_DECREF(resObj);
-        Py_DECREF(reqObj);
+        Py_DECREF(resObjSelf);
+        Py_DECREF(reqObjSelf);
     });
 
     return Py_None;//(PyObject *) self;

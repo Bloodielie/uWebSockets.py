@@ -19,21 +19,25 @@ static PyObject *HttpResponse_end(HttpResponseObject *self, PyObject *args) {
 
 static PyObject *HttpResponse_writeHeader(HttpResponseObject *self, PyObject *args) {
 
-	PyObject *one;
-	PyArg_ParseTuple(args, "O", &one);
+	PyObject *key, *value;
+	PyArg_ParseTuple(args, "OO", &key, &value);
 
 	// string to utf8
 	Py_ssize_t size;
-	const char *str = PyUnicode_AsUTF8AndSize(one, &size);
-	std::string_view message(str, size);
+	const char *str = PyUnicode_AsUTF8AndSize(key, &size);
+	std::string_view keyString(str, size);
 
-	self->res->end(message);
+	str = PyUnicode_AsUTF8AndSize(value, &size);
+	std::string_view valueString(str, size);
+
+	self->res->writeHeader(keyString, valueString);
 	return Py_None;
 }
 
 // HttpResponse method list
 static PyMethodDef HttpResponse_methods[] = {
     {"end", (PyCFunction) HttpResponse_end, METH_VARARGS, "no doc"},
+	{"writeHeader", (PyCFunction) HttpResponse_writeHeader, METH_VARARGS, "no doc"},
     {NULL}
 };
 

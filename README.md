@@ -42,3 +42,12 @@ app.listen(3000, listenHandler)
 For a performance reference, consider [Japronto performance graph](https://github.com/squeaky-pl/japronto#performance), then the following graph:
 
 ![](misc/perf.png)
+
+#### Pay what you want.
+Commercially developed on a sponsored/consulting basis; BitMEX, Bitfinex and Coinbase are current or previous sponsors. Contact [me, the author](https://github.com/alexhultman) for support, feature development or consulting/contracting.
+
+![](https://raw.githubusercontent.com/uNetworking/uWebSockets/master/misc/2018.png)
+
+#### Know thy legal matters.
+
+*µWebSockets.py is intellectual property licensed Apache 2.0 with limitations on trademark use. Forks must be clearly labelled as such and must not be confused with the original.*

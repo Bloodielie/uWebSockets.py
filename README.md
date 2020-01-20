@@ -11,7 +11,7 @@
 
 #### In a nutshell
 
-µWebSockets is a fast C++ web server and broker made available to JavaScript developers since 2016, now also available to Python developers. It integrates seamlessly to any `asyncio` project as long as `uvloop` is set up and used as event loop.
+µWebSockets is a fast C++ web server and broker made available to JavaScript developers since 2016, now also available to Python developers. It integrates seamlessly to any `asyncio` project by exporting its own event loop.
 
 ```python
 app = uWS.App()

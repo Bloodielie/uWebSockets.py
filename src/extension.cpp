@@ -53,8 +53,8 @@ static PyMethodDef methods[] = {
 PyMODINIT_FUNC PyInit_uwebsocketspy() {
 
     printf("Compiled against Python version: %d.%d.%d\n", PY_MAJOR_VERSION, PY_MINOR_VERSION, PY_MICRO_VERSION);
-    printf("Compiled against libuv version: %d.%d.%d\n", UV_VERSION_MAJOR, UV_VERSION_MINOR, UV_VERSION_PATCH);
-    printf("Linked against libuv version: %s\n", uv_version_string());
+    //printf("Compiled against libuv version: %d.%d.%d\n", UV_VERSION_MAJOR, UV_VERSION_MINOR, UV_VERSION_PATCH);
+    //printf("Linked against libuv version: %s\n", uv_version_string());
 
     uWS::Loop::get(uv_default_loop());
 

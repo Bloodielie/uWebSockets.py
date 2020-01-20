@@ -13,7 +13,7 @@
 
 #### In a nutshell
 
-µWebSockets is a fast C++ web server and broker made available to JavaScript developers since 2016, now also available to Python developers. It integrates seamlessly to any `asyncio` project by exporting its own event loop.
+`µWebSockets.py` is an ultra fast and standards compliant Http/WebSockets server/broker/router available to JavaScript developers since 2016, now also Python developers. It is written entirely in C++ and integrates seamlessly with any `asyncio` project by plugging the elegant Python interpreter with its own `Selector` implementation.
 
 ```python
 app = uWS.App()
@@ -39,7 +39,7 @@ app.listen(3000, listenHandler)
 
 #### Ready all thrusters
 
-`pip install uWebSockets.py`
+* `pip install uWebSockets.py` no compiler needed, installs without any dependencies. Integrates seamlessly.
 
 For a performance reference, consider [Japronto performance graph](https://github.com/squeaky-pl/japronto#performance), then the following graph:
 

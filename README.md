@@ -1,3 +1,5 @@
+# work in progress, come back in a month
+
 <div align="center">
 <img src="misc/logo.svg" height="180" />
 
@@ -9,16 +11,11 @@
 
 </div>
 
-This is a **work-in-progress** Python extension much like the Node.js counterpart `µWebSockets.js`. It performs very favorably, outrunning both µWebSockets.js and Japronto by significant amount:
+#### In a nutshell
 
-![](misc/perf.png)
+µWebSockets is a fast C++ web server and broker made available to JavaScript developers since 2016, now also available to Python developers. It integrates seamlessly to any `asyncio` project by exporting its own event loop.
 
-The idea here is to ultimately provide a seamless, pip install kind of works-out-of-the-box experience but for Python developers.
-
-Here's what works right now:
 ```python
-import uwebsocketspy as uWS
-
 app = uWS.App()
 
 def httpGet(res, req):
@@ -26,26 +23,33 @@ def httpGet(res, req):
 
 app.get("/*", httpGet)
 
-def wsOpen(ws, req):
-	print("Welcome customer!");
-
 def wsMessage(ws, message, isBinary):
 	ws.send(message)
 
-def wsClose(ws, code, message):
-	print("Aw, we lost a customer");
-
 app.ws("/*", {
 	"maxPayloadLength": 1024,
-	"open": wsOpen,
-	"message": wsMessage,
-	"close": wsClose
+	"message": wsMessage
 });
 
 def listenHandler():
         print("Listening to port 3000")
 
 app.listen(3000, listenHandler)
-
-app.run()
 ```
+
+#### Ready all thrusters
+
+`pip install uWebSockets.py`
+
+For a performance reference, consider [Japronto performance graph](https://github.com/squeaky-pl/japronto#performance), then the following graph:
+
+![](misc/perf.png)
+
+#### Pay what you want.
+Commercially developed on a sponsored/consulting basis; BitMEX, Bitfinex and Coinbase are current or previous sponsors. Contact [me, the author](https://github.com/alexhultman) for support, feature development or consulting/contracting.
+
+![](https://raw.githubusercontent.com/uNetworking/uWebSockets/master/misc/2018.png)
+
+#### Know thy legal matters.
+
+*µWebSockets.py is intellectual property licensed Apache 2.0 with limitations on trademark use. Forks must be clearly labelled as such and must not be confused with the original.*

@@ -13,7 +13,7 @@
 
 #### In a nutshell
 
-`µWebSockets.py` is an ultra fast and standards compliant Http/WebSockets server/broker/router available to JavaScript developers since 2016, now also Python developers. It is written entirely in C++ and integrates seamlessly with any `asyncio` project by plugging the elegant Python interpreter with its own `Selector` implementation.
+`µWebSockets.py` is an ultra fast and standards compliant Http/WebSockets server/broker/router available to JavaScript developers since 2016, now also Python developers (hello handsome!). It is written entirely in C++ and integrates seamlessly with any `asyncio` project by plugging the elegant Python interpreter with its own `Selector` implementation.
 
 ```python
 app = uWS.App()

@@ -1,3 +1,5 @@
+# work in progress, come back in a month
+
 <div align="center">
 <img src="misc/logo.svg" height="180" />
 

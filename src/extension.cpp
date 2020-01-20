@@ -4,6 +4,7 @@
 #include <App.h>
 #include <iostream>
 
+#include "Selector.h"
 #include "HttpRequestWrapper.h"
 #include "HttpResponseWrapper.h"
 #include "WebSocketWrapper.h"
@@ -55,10 +56,13 @@ PyMODINIT_FUNC PyInit_uwebsocketspy() {
     printf("Compiled against libuv version: %d.%d.%d\n", UV_VERSION_MAJOR, UV_VERSION_MINOR, UV_VERSION_PATCH);
     printf("Linked against libuv version: %s\n", uv_version_string());
 
+    uWS::Loop::get(uv_default_loop());
+
     Py_INCREF(&HttpResponseType);
     Py_INCREF(&AppType);
     Py_INCREF(&WebSocketType);
     Py_INCREF(&HttpRequestType);
+    Py_INCREF(&SelectorType);
 
     /* Ready all types */
     if (PyType_Ready(&AppType) < 0)
@@ -73,6 +77,9 @@ PyMODINIT_FUNC PyInit_uwebsocketspy() {
     if (PyType_Ready(&HttpRequestType) < 0)
         return NULL;
 
+    if (PyType_Ready(&SelectorType) < 0)
+        return NULL;
+
     /* Init module */
     PyObject *m = PyModule_Create(&custommodule);
     if (m == NULL)
@@ -84,6 +91,13 @@ PyMODINIT_FUNC PyInit_uwebsocketspy() {
     /* App as top level class */
     if (PyModule_AddObject(m, "App", (PyObject *) &AppType) < 0) {
         Py_DECREF(&AppType);
+        Py_DECREF(m);
+        return NULL;
+    }
+
+    /* Event loop as top level class */
+    if (PyModule_AddObject(m, "Selector", (PyObject *) &SelectorType) < 0) {
+        Py_DECREF(&SelectorType);
         Py_DECREF(m);
         return NULL;
     }

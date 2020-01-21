@@ -13,6 +13,7 @@ typedef struct {
     /* We build the list of (SelectorKey, events) tuples in iterations */
     PyObject *list;
     int list_length;
+    PyObject *lenFunc;
 } SelectorObject;
 
 /* These map perfectly to uv */
@@ -185,7 +186,7 @@ static PyObject *Selector_select(SelectorObject *self, PyObject **args, int narg
     if (nargs == 1) {
 
             int timeout = PyLong_AsLong(args[0]);
-            if (timeout == 0) {
+            if (timeout == 0 || timeout < 10) {
 
 
                 // make it a function
@@ -194,6 +195,9 @@ static PyObject *Selector_select(SelectorObject *self, PyObject **args, int narg
                 return PyList_GetSlice(self->list, 0, high);
 
 
+            } else {
+
+                printf("NOTE: select called with timeout: %d\n", timeout);
             }
 
     } else {
@@ -210,12 +214,19 @@ static PyObject *Selector_select(SelectorObject *self, PyObject **args, int narg
         }
 
         /* If we have any ready polls for Python we have to return them now */
-        if (PyList_Size(self->list)) {
+        if (self->list_length) {
             break;
         }
 
         /* If the event loop has any _ready Handles we need to return to trigger them */
-        // todo
+        PyObject *lenObj = PyObject_CallFunctionObjArgs(self->lenFunc, NULL);
+        int len = PyLong_AsLong(lenObj);
+        Py_DECREF(lenObj);
+        if (len) {
+            printf("BREAKING DUE TO READY LIST\n");
+            break;
+        }
+
     }
 
     /* Return the ready list of (SelectorKey, events) tuples, make a new one */
@@ -271,6 +282,16 @@ static PyObject *Selector_close(SelectorObject *self, PyObject *args) {
     return Py_None;
 }
 
+static PyObject *Selector_set_ready_queue(SelectorObject *self, PyObject **args, int nargs) {
+
+    PyObject *f = PyObject_GetAttrString(args[0], "__len__");
+    Py_INCREF(f);
+    self->lenFunc = f;
+
+    Py_INCREF(Py_None);
+    return Py_None;
+}
+
 static PyMethodDef Selector_methods[] = {
 
     {"register", (PyCFunction) Selector_register, METH_FASTCALL, "no doc"},
@@ -280,6 +301,8 @@ static PyMethodDef Selector_methods[] = {
     {"get_key", (PyCFunction) Selector_get_key, METH_FASTCALL, "no doc"},
     {"get_map", (PyCFunction) Selector_get_map, METH_VARARGS, "no doc"},
     {"close", (PyCFunction) Selector_get_map, METH_FASTCALL, "no doc"},
+
+    {"set_ready_queue", (PyCFunction) Selector_set_ready_queue, METH_FASTCALL, "no doc"},
 
     {NULL}
 };

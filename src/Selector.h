@@ -1,165 +1,179 @@
 /* Implements the Python event loop */
 
 #include <uv.h>
+#include <map>
 
 typedef struct {
     PyObject_HEAD
-	uv_loop_t *loop;
+    uv_loop_t *loop;
     PyTypeObject *namedTuple;
+    /* We build the list of (SelectorKey, events) tuples in iterations */
     PyObject *list;
 } SelectorObject;
 
-int read_mask = 1;
-int write_mask = 2;
+/* These map perfectly to uv */
+const int read_mask = 1;
+const int write_mask = 2;
 
-// vi behöver en fd -till PyObject mapper som håller SelectionKey från fd
-#include <map>
+/* This is the (native) map from fd to uv_poll_t, which points to SelectorKey in userdata */
+std::map<int, uv_poll_t *> polls;
 
-std::map<int, PyObject *> polls;
-std::map<int, uv_poll_t *> uv_polls;
-
-// poll_cb bygger upp vektorn att ge tillbaka
-
-// sel.register(conn, selectors.EVENT_READ, read)
-// integer eller object med fileno, bitmask, userdata (obj)
-static PyObject *Selector_register(SelectorObject *self, PyObject **args, int nargs) {
-
-    /* Is first argument an integer? */
+/* Takes an integer, or object with method fileno. Returns -1 on invalid input. */
+int getFd(PyObject *arg) {
     int fd = -1;
-    if (PyLong_Check(args[0])) {
-        fd = PyLong_AsLong(args[0]);
-        printf("FD är: %d\n", fd);
+    if (PyLong_Check(arg)) {
+        fd = PyLong_AsLong(arg);
     } else {
-        printf("Första är inte fd!\n");
-        PyObject *fileobj = args[0];
-
-        PyObject *fdObj = PyObject_CallMethod(fileobj, "fileno", NULL);
+        PyObject *fdObj = PyObject_CallMethod(arg, "fileno", NULL);
         if (PyLong_Check(fdObj)) {
             fd = PyLong_AsLong(fdObj);
-            printf("FD från object är: %d\n", fd);
-        } else {
-            // throw exception and return null
         }
     }
+    return fd;
+}
 
+/* Takes fileobj, bitmask, userdata. Returns SelectorKey. */
+static PyObject *Selector_register(SelectorObject *self, PyObject **args, int nargs) {
+    /* First two args are required */
+    if (nargs < 2) {
+        PyErr_SetString(PyExc_ValueError, "yo!");
+        return NULL;
+    }
+
+    /* fd */
+    int fd = getFd(args[0]);
+    if (fd == -1) {
+        PyErr_SetString(PyExc_ValueError, "yo!");
+        return NULL;
+    }
+
+    /* mask */
     int mask = 0;
     if (PyLong_Check(args[1])) {
         mask = PyLong_AsLong(args[1]);
-        printf("bitmask är: %d\n", mask);
+    } else {
+        PyErr_SetString(PyExc_ValueError, "yo!");
+        return NULL;
     }
 
-    printf("Register called with fd: %d mask: %d\n", fd, mask);
-
-    // SelectorKey
-    //fileobj, fd, events, data
-
-    PyObject *namedTuple = PyStructSequence_New(self->namedTuple);
-
+    PyObject *selectorKey = PyStructSequence_New(self->namedTuple);
+    /* Fileobj */
     Py_INCREF(args[0]);
+    PyStructSequence_SetItem(selectorKey, 0, args[0]);
+    /* fd */
+    PyStructSequence_SetItem(selectorKey, 1, PyLong_FromLong(fd));
+    /* mask */
+    PyStructSequence_SetItem(selectorKey, 2, PyLong_FromLong(mask));
 
-
-    PyStructSequence_SetItem(namedTuple, 0, args[0]);
-    PyStructSequence_SetItem(namedTuple, 1, PyLong_FromLong(fd));
-    PyStructSequence_SetItem(namedTuple, 2, PyLong_FromLong(mask));
-
-    // optional - kolla längden på args!
+    /* Third arg is optional */
     if (nargs == 3) {
-        printf("Vi har user data!\n");
+        /* userdata */
         Py_INCREF(args[2]);
-        PyStructSequence_SetItem(namedTuple, 3, args[2]);
+        PyStructSequence_SetItem(selectorKey, 3, args[2]);
     }
 
-    // kolla om vi redan har denna fd eller lägg till
-    Py_INCREF(namedTuple); // behövs den? efter new? ja för vi sparar den hos oss också
-    polls.insert({fd, namedTuple});
+    /* Do we already have this fd? */
+    if (polls.find(fd) != polls.end()) {
+        PyErr_SetString(PyExc_KeyError, "yo!");
+        return NULL;
+    }
 
-
-    // registrera den själva grejen, peka till pyobjektet
-    // vi kan nå SelectorKey:n genom fd också
+    /* Create the actual poll */
     uv_poll_t *p = new uv_poll_t;
     uv_poll_init_socket(self->loop, p, fd);
 
+    /* The poll points to its SelectorKey */
+    p->data = selectorKey;
 
-    // starta pollning enligt mask
+    /* Start polling according to mask */
     uv_poll_start(p, mask, [](uv_poll_t *handle, int status, int events) {
-        // show fd for debugging
-        uv_os_fd_t fd;
-        uv_fileno((uv_handle_t *)handle, &fd);
-        //printf("Poll med FD: %d är redo!\n", fd);
-
-        // get loop and from that SelectorObject
+        /* Get loop from poll, and from that SelectorObject */
         uv_loop_t *loop = uv_handle_get_loop((uv_handle_t *) handle);
         SelectorObject *self = (SelectorObject *) loop->data;
 
-        // make tuple of SelectorKEy and events
-        PyObject *tuple = PyTuple_Pack(2, (PyObject *) handle->data, PyLong_FromLong(events));
-        Py_INCREF(tuple);
-        // add it to this iteration list
-        PyList_Append(self->list, tuple);
+        /* Grab our SelectorKey */
+        PyObject *selectorKey = (PyObject *) handle->data;
+
+        /* Add it to the list */
+        //Py_INCREF(selectorKey);
+        PyList_Append(self->list, PyTuple_Pack(2, selectorKey, PyLong_FromLong(events)));
     });
 
+    /* Finally add it to the map */
+    polls.insert({fd, p});
 
-    uv_polls.insert({fd, p});
-
-    Py_INCREF(namedTuple);
-    p->data = namedTuple;
-    return namedTuple;
+    /* Return the SelectorKey */
+    Py_INCREF(selectorKey);
+    return selectorKey;
 }
 
+/* Takes fileobj or integer */
 static PyObject *Selector_unregister(SelectorObject *self, PyObject **args, int nargs) {
 
-    int fd = -1;
-    if (PyLong_Check(args[0])) {
-        fd = PyLong_AsLong(args[0]);
-        printf("FD är: %d\n", fd);
-    } else {
-        printf("Första är inte fd!\n");
-        PyObject *fileobj = args[0];
-
-        PyObject *fdObj = PyObject_CallMethod(fileobj, "fileno", NULL);
-        if (PyLong_Check(fdObj)) {
-            fd = PyLong_AsLong(fdObj);
-            printf("FD från object är: %d\n", fd);
-        } else {
-            // throw exception and return null
-        }
+    /* We require exactly one argument */
+    if (nargs != 1) {
+        PyErr_SetString(PyExc_ValueError, "yo!");
+        return NULL;
     }
 
-    uv_poll_t *p = uv_polls[fd];
+    /* We also require that to hold a valid fd */
+    int fd = getFd(args[0]);
+    if (fd == -1) {
+        PyErr_SetString(PyExc_ValueError, "yo!");
+        return NULL;
+    }
 
+    /* Decrease the SelectorKey refcount */
+    uv_poll_t *p = polls[fd];
+    PyObject *selectorKey = (PyObject *) p->data;
+    Py_DECREF(selectorKey);
+
+    /* Stop and delete the poll */
     uv_poll_stop(p);
     uv_close((uv_handle_t *) p, [](uv_handle_t *p) {
         delete (uv_poll_t *) p;
     });
 
-    // tar fd eller fileno-obj som key
-
-    printf("Unregister called\n");
-
-
-    uv_polls.erase(fd);
+    /* Remove it from our map */
     polls.erase(fd);
 
+    Py_INCREF(Py_None);
+    return Py_None;
+}
 
+/* Takes fileobj, events and optionally data. Returns a new SelectorKey */
+static PyObject *Selector_modify(SelectorObject *self, PyObject **args, int nargs) {
+
+    /* We require at least 2 args */
+    if (nargs < 2) {
+        PyErr_SetString(PyExc_ValueError, "yo!");
+        return NULL;
+    }
+
+    /* We also require first one to be a valid fd */
+    int fd = getFd(args[0]);
+    if (fd == -1) {
+        PyErr_SetString(PyExc_ValueError, "yo!");
+        return NULL;
+    }
+
+    uv_poll_t *p = polls[fd];
+
+    /* Delete the old selectorKey */
+    PyObject *selectorKey = (PyObject *) p->data;
+    Py_DECREF(selectorKey);
+
+    /* Create a new one instead */
 
     Py_INCREF(Py_None);
     return Py_None;
 }
 
-static PyObject *Selector_modify(SelectorObject *self, PyObject *args) {
+/* This only returns to Python when there are Python events, or when the loop has ready handles. */
 
-    printf("Modify called\n");
-
-    Py_INCREF(Py_None);
-    return Py_None;
-}
-
-// returns list of triggered events
-
-/* This only returns to Python when there are Python events */
+/* Optionally takes timeout */
 static PyObject *Selector_select(SelectorObject *self, PyObject **args, int nargs) {
     if (nargs == 1) {
-            //printf("Select called with timeout: %d\n", PyLong_AsLong(args[0]));
 
             int timeout = PyLong_AsLong(args[0]);
             if (timeout == 0) {
@@ -168,7 +182,7 @@ static PyObject *Selector_select(SelectorObject *self, PyObject **args, int narg
 
                 self->list = PyList_New(0);
 
-                Py_INCREF(list);
+                //Py_INCREF(list);
                 return list;
             }
 
@@ -176,74 +190,67 @@ static PyObject *Selector_select(SelectorObject *self, PyObject **args, int narg
             //printf("Select called\n");
     }
 
+    /* We want to stay as long as we can in this loop, not yielding to asyncio until we have to */
     while (true) {
 
-        // if we have no polls just return
-        /*if (polls.size() == 0) {
-            Py_INCREF(Py_None);
-            return Py_None;
-        }*/
-
-        int still = uv_run(self->loop, UV_RUN_ONCE);
-
-        //printf("One loop iteration!\n");
-        //break;
-
-        //if (!still)
-            //break;
+        int keepGoing = uv_run(self->loop, UV_RUN_ONCE);
+        /* We don't need to keep going if we don't have to */
+        if (!keepGoing) {
+            break;
+        }
 
         /* If we have any ready polls for Python we have to return them now */
         if (PyList_Size(self->list)) {
             break;
         }
+
+        /* If the event loop has any _ready Handles we need to return to trigger them */
+        // todo
     }
 
-
-
-    // This returns a list of (key, events) tuples, one for each ready file object.
-    // key is the SelectorKey instance corresponding to a ready file object. events is a bitmask of events ready on this file object.
-
-    // vi kan ha en lista för-allokerad som pollsen fyller i, appendar till
-    // pollsen måste veta om sin SelectorKey
-    // (SelectorKey, events), ()
-
+    /* Return the ready list of (SelectorKey, events) tuples, make a new one */
     PyObject *list = self->list;
 
+    /* Create a new list and hold the only reference */
     self->list = PyList_New(0);
 
-    Py_INCREF(list);
+    // why do we increase this? we give the only one!
+    //Py_INCREF(list);
     return list;
 }
 
+/* How is this even a thing? We would need to create a whole map here every time */
 static PyObject *Selector_get_map(SelectorObject *self, PyObject *args) {
 
-    printf("Get_map called\n");
-
-
-
-    Py_INCREF(Py_None);
-    return Py_None;
-}
-
-static PyObject *Selector_get_key(SelectorObject *self, PyObject *args) {
-
-    printf("Get_key called\n");
-
-    int fd;
-    int ok = PyArg_ParseTuple(args, "i", &fd);
-
-    printf("ok: %d, fd: %d\n", ok, fd);
-
-    //PyExc_KeyError
-
-    PyErr_SetString(PyExc_KeyError, "yo!");
+    PyErr_SetString(PyExc_ValueError, "uWS.Selector.get_map not implemented!");
     return NULL;
 
-
     Py_INCREF(Py_None);
     return Py_None;
 }
 
+static PyObject *Selector_get_key(SelectorObject *self, PyObject **args, int nargs) {
+
+    int fd = getFd(args[0]);
+    if (fd == -1) {
+        PyErr_SetString(PyExc_ValueError, "yo!");
+        return NULL;
+    }
+
+    auto it = polls.find(fd);
+    if (it == polls.end()) {
+        PyErr_SetString(PyExc_KeyError, "yo!");
+        return NULL;
+    }
+
+    PyObject *selectorKey = (PyObject *) it->second->data;
+
+    /* Return the selectorKey */
+    Py_INCREF(selectorKey);
+    return selectorKey;
+}
+
+// essentially like closing the event loop altogether
 static PyObject *Selector_close(SelectorObject *self, PyObject *args) {
 
     printf("Close called\n");
@@ -257,9 +264,9 @@ static PyMethodDef Selector_methods[] = {
 
     {"register", (PyCFunction) Selector_register, METH_FASTCALL, "no doc"},
     {"unregister", (PyCFunction) Selector_unregister, METH_FASTCALL, "no doc"},
-    {"modify", (PyCFunction) Selector_modify, METH_VARARGS, "no doc"},
+    {"modify", (PyCFunction) Selector_modify, METH_FASTCALL, "no doc"},
     {"select", (PyCFunction) Selector_select, METH_FASTCALL, "no doc"},
-    {"get_key", (PyCFunction) Selector_get_key, METH_VARARGS, "no doc"},
+    {"get_key", (PyCFunction) Selector_get_key, METH_FASTCALL, "no doc"},
     {"get_map", (PyCFunction) Selector_get_map, METH_VARARGS, "no doc"},
     {"close", (PyCFunction) Selector_get_map, METH_FASTCALL, "no doc"},
 
@@ -287,13 +294,13 @@ static PyObject *Selector_new(PyTypeObject *type, PyObject *args, PyObject *kwds
             4
         };
 
+        /* We start with an empty list */
         self->list = PyList_New(0);
 
-        // create tuple type
+        /* Create selectorKey type object */
         self->namedTuple = PyStructSequence_NewType(&desc);
 
-        printf("Named tuple is: %p\n", self->namedTuple);
-
+        /* The uv_loop_t points to self in userdata */
         self->loop->data = self;
     }
     Py_INCREF(self);

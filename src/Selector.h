@@ -3,12 +3,16 @@
 #include <uv.h>
 #include <map>
 
+#undef NDEBUG
+#include <cassert>
+
 typedef struct {
     PyObject_HEAD
     uv_loop_t *loop;
     PyTypeObject *namedTuple;
     /* We build the list of (SelectorKey, events) tuples in iterations */
     PyObject *list;
+    int list_length;
 } SelectorObject;
 
 /* These map perfectly to uv */
@@ -28,6 +32,7 @@ int getFd(PyObject *arg) {
         if (PyLong_Check(fdObj)) {
             fd = PyLong_AsLong(fdObj);
         }
+        Py_DECREF(fdObj);
     }
     return fd;
 }
@@ -94,9 +99,13 @@ static PyObject *Selector_register(SelectorObject *self, PyObject **args, int na
         /* Grab our SelectorKey */
         PyObject *selectorKey = (PyObject *) handle->data;
 
-        /* Add it to the list */
-        //Py_INCREF(selectorKey);
-        PyList_Append(self->list, PyTuple_Pack(2, selectorKey, PyLong_FromLong(events)));
+        PyObject *eventsLong = PyLong_FromLong(events);
+        // this increases ref count of all passed objects
+        PyObject *tuple = PyTuple_Pack(2, selectorKey, eventsLong);
+        Py_DECREF(eventsLong);
+
+        // this does not increase, it steals the existing reference
+        PyList_SetItem(self->list, self->list_length++, tuple);
     });
 
     /* Finally add it to the map */
@@ -177,13 +186,14 @@ static PyObject *Selector_select(SelectorObject *self, PyObject **args, int narg
 
             int timeout = PyLong_AsLong(args[0]);
             if (timeout == 0) {
-                // important to just give it empty list when timeout is 0
-                PyObject *list = self->list;
 
-                self->list = PyList_New(0);
 
-                //Py_INCREF(list);
-                return list;
+                // make it a function
+                int high = self->list_length;
+                self->list_length = 0;
+                return PyList_GetSlice(self->list, 0, high);
+
+
             }
 
     } else {
@@ -211,19 +221,20 @@ static PyObject *Selector_select(SelectorObject *self, PyObject **args, int narg
     /* Return the ready list of (SelectorKey, events) tuples, make a new one */
     PyObject *list = self->list;
 
-    /* Create a new list and hold the only reference */
-    self->list = PyList_New(0);
 
-    // why do we increase this? we give the only one!
-    //Py_INCREF(list);
-    return list;
+    // make it a function
+    int high = self->list_length;
+    self->list_length = 0;
+    return PyList_GetSlice(self->list, 0, high);
 }
 
 /* How is this even a thing? We would need to create a whole map here every time */
 static PyObject *Selector_get_map(SelectorObject *self, PyObject *args) {
 
-    PyErr_SetString(PyExc_ValueError, "uWS.Selector.get_map not implemented!");
-    return NULL;
+    printf("Mappen innehåller %d polls\n", polls.size());
+
+    //PyErr_SetString(PyExc_ValueError, "uWS.Selector.get_map not implemented!");
+    //return NULL;
 
     Py_INCREF(Py_None);
     return Py_None;
@@ -295,7 +306,10 @@ static PyObject *Selector_new(PyTypeObject *type, PyObject *args, PyObject *kwds
         };
 
         /* We start with an empty list */
-        self->list = PyList_New(0);
+
+        /* Let's make a list with a hard limit */
+        self->list = PyList_New(1024);
+        self->list_length = 0;
 
         /* Create selectorKey type object */
         self->namedTuple = PyStructSequence_NewType(&desc);

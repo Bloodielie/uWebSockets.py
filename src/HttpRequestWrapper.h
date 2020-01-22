@@ -15,7 +15,7 @@ static PyObject *HttpRequest_getHeader(HttpRequestObject *self, PyObject *args) 
 
 	std::cout << header << " is: " << self->req->getHeader(header) << std::endl;
 	
-    
+    Py_INCREF(Py_None);
     return Py_None;
 }
 

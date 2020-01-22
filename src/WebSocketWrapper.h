@@ -4,6 +4,8 @@ typedef struct {
 } WebSocketObject;
 
 static PyObject *WebSocket_end(WebSocketObject *self, PyObject *args) {
+
+    Py_INCREF(Py_None);
 	return Py_None;
 }
 
@@ -24,6 +26,8 @@ static PyObject *WebSocket_send(WebSocketObject *self, PyObject **args, int narg
 	//self->ws->send({(char *) buffer->buf, buffer->len}, uWS::OpCode::TEXT);
 
     self->ws->send({str, size}, uWS::OpCode::TEXT);
+
+    Py_INCREF(Py_None);
 	return Py_None;
 }
 

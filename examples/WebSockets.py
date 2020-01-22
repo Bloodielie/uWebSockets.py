@@ -1,21 +1,20 @@
 # PYTHONPATH=. python examples/WebSockets.py
-import uwebsocketspy as uWS
+import uws
+import asyncio
 
-app = uWS.App()
+# Integrate with asyncio
+asyncio.set_event_loop(uws.Loop())
 
-def httpGet(res, req):
-	res.end("Sorry, no HTTP for you this time")
-
-app.get("/*", httpGet)
+app = uws.App()
 
 def wsOpen(ws, req):
-	print("Welcome customer!");
+	print("WebSocket opened!");
 
 def wsMessage(ws, message, isBinary):
 	ws.send(message)
 
 def wsClose(ws, code, message):
-	print("Aw, we lost a customer");
+	print("WebSocket closed!");
 
 app.ws("/*", {
 	"maxPayloadLength": 1024,
@@ -29,5 +28,6 @@ def listenHandler():
 
 app.listen(3000, listenHandler)
 
-app.run()
+# Run asyncio event loop
+asyncio.get_event_loop().run_forever()
 

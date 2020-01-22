@@ -14,6 +14,11 @@ typedef struct {
     PyObject *list;
     int list_length;
     PyObject *lenFunc;
+
+    PyObject *sked;
+
+    bool tick;
+    uv_timer_t *timer;
 } SelectorObject;
 
 /* These map perfectly to uv */
@@ -183,33 +188,49 @@ static PyObject *Selector_modify(SelectorObject *self, PyObject **args, int narg
 
 /* Optionally takes timeout */
 static PyObject *Selector_select(SelectorObject *self, PyObject **args, int nargs) {
+
+    // milliseconds
+    int timeout = -1;
+
     if (nargs == 1) {
 
-            int timeout = PyLong_AsLong(args[0]);
-            if (timeout == 0 || timeout < 10) {
-
-
-                // make it a function
-                int high = self->list_length;
-                self->list_length = 0;
-                return PyList_GetSlice(self->list, 0, high);
-
-
+            if (PyLong_Check(args[0])) {
+                timeout = PyLong_AsLong(args[0]) * 1000;
+            } else if (PyFloat_Check(args[0])) {
+                timeout = PyFloat_AsDouble(args[0]) * 1000.0;
             } else {
-
-                printf("NOTE: select called with timeout: %d\n", timeout);
+                printf("ERROR!!!!!!\n");
             }
 
+            
     } else {
             //printf("Select called\n");
     }
 
+    if (timeout != -1) {
+        // we have timeout set
+        uv_timer_stop(self->timer);
+        uv_timer_start(self->timer, [](uv_timer_t *t) {
+            // timer points towards self
+            ((SelectorObject *) t->data)->tick = true;
+        }, timeout, 0);
+    }
+
     /* We want to stay as long as we can in this loop, not yielding to asyncio until we have to */
     while (true) {
+        if (timeout <= 0) {
+            uv_run(self->loop, UV_RUN_NOWAIT);
+            break;
+        } else {
+            int keepGoing = uv_run(self->loop, UV_RUN_ONCE);
+            /* We don't need to keep going if we don't have to */
+            if (!keepGoing) {
+                break;
+            }
+        }
 
-        int keepGoing = uv_run(self->loop, UV_RUN_ONCE);
-        /* We don't need to keep going if we don't have to */
-        if (!keepGoing) {
+        if (self->tick) {
+            self->tick = false;
             break;
         }
 
@@ -217,21 +238,10 @@ static PyObject *Selector_select(SelectorObject *self, PyObject **args, int narg
         if (self->list_length) {
             break;
         }
-
-        /* If the event loop has any _ready Handles we need to return to trigger them */
-        PyObject *lenObj = PyObject_CallFunctionObjArgs(self->lenFunc, NULL);
-        int len = PyLong_AsLong(lenObj);
-        Py_DECREF(lenObj);
-        if (len) {
-            printf("BREAKING DUE TO READY LIST\n");
-            break;
-        }
-
     }
 
     /* Return the ready list of (SelectorKey, events) tuples, make a new one */
     PyObject *list = self->list;
-
 
     // make it a function
     int high = self->list_length;
@@ -282,11 +292,11 @@ static PyObject *Selector_close(SelectorObject *self, PyObject *args) {
     return Py_None;
 }
 
-static PyObject *Selector_set_ready_queue(SelectorObject *self, PyObject **args, int nargs) {
+static PyObject *Selector_tick(SelectorObject *self, PyObject **args, int nargs) {
 
-    PyObject *f = PyObject_GetAttrString(args[0], "__len__");
-    Py_INCREF(f);
-    self->lenFunc = f;
+
+    self->tick = true;
+
 
     Py_INCREF(Py_None);
     return Py_None;
@@ -302,7 +312,7 @@ static PyMethodDef Selector_methods[] = {
     {"get_map", (PyCFunction) Selector_get_map, METH_VARARGS, "no doc"},
     {"close", (PyCFunction) Selector_get_map, METH_FASTCALL, "no doc"},
 
-    {"set_ready_queue", (PyCFunction) Selector_set_ready_queue, METH_FASTCALL, "no doc"},
+    {"tick", (PyCFunction) Selector_tick, METH_FASTCALL, "no doc"},
 
     {NULL}
 };
@@ -311,6 +321,10 @@ static PyObject *Selector_new(PyTypeObject *type, PyObject *args, PyObject *kwds
     SelectorObject *self = (SelectorObject *) type->tp_alloc(type, 0);
     if (self != NULL) {
 	    self->loop = uv_default_loop();
+
+        self->timer = new uv_timer_t;
+        uv_timer_init(self->loop, self->timer);
+        self->timer->data = self;
 
         PyStructSequence_Field fields[] = {
             {"fileobj", "doc"},
@@ -336,6 +350,8 @@ static PyObject *Selector_new(PyTypeObject *type, PyObject *args, PyObject *kwds
 
         /* Create selectorKey type object */
         self->namedTuple = PyStructSequence_NewType(&desc);
+
+        self->tick = false;
 
         /* The uv_loop_t points to self in userdata */
         self->loop->data = self;

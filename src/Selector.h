@@ -17,8 +17,10 @@ typedef struct {
 
     PyObject *sked;
 
-    bool tick;
+    bool tick, thrw;
     uv_timer_t *timer;
+
+    uv_signal_t *sig;
 } SelectorObject;
 
 /* These map perfectly to uv */
@@ -189,17 +191,22 @@ static PyObject *Selector_modify(SelectorObject *self, PyObject **args, int narg
 /* Optionally takes timeout */
 static PyObject *Selector_select(SelectorObject *self, PyObject **args, int nargs) {
 
+    self->thrw = false;
+
     // milliseconds
     int timeout = -1;
+    bool hasTimeout = false;
 
     if (nargs == 1) {
 
             if (PyLong_Check(args[0])) {
                 timeout = PyLong_AsLong(args[0]) * 1000;
+                hasTimeout = true;
             } else if (PyFloat_Check(args[0])) {
                 timeout = PyFloat_AsDouble(args[0]) * 1000.0;
+                hasTimeout = true;
             } else {
-                printf("ERROR!!!!!!\n");
+                // assume we are given the None object here
             }
 
             
@@ -207,7 +214,7 @@ static PyObject *Selector_select(SelectorObject *self, PyObject **args, int narg
             //printf("Select called\n");
     }
 
-    if (timeout != -1) {
+    if (hasTimeout) {
         // we have timeout set
         uv_timer_stop(self->timer);
         uv_timer_start(self->timer, [](uv_timer_t *t) {
@@ -218,7 +225,7 @@ static PyObject *Selector_select(SelectorObject *self, PyObject **args, int narg
 
     /* We want to stay as long as we can in this loop, not yielding to asyncio until we have to */
     while (true) {
-        if (timeout <= 0) {
+        if (hasTimeout && timeout <= 0) {
             uv_run(self->loop, UV_RUN_NOWAIT);
             break;
         } else {
@@ -227,6 +234,12 @@ static PyObject *Selector_select(SelectorObject *self, PyObject **args, int narg
             if (!keepGoing) {
                 break;
             }
+        }
+
+        if (self->thrw) {
+            // raise keyboardinterrupt
+            PyErr_SetString(PyExc_KeyboardInterrupt, "yo! klciked!");
+            return NULL;
         }
 
         if (self->tick) {
@@ -325,6 +338,18 @@ static PyObject *Selector_new(PyTypeObject *type, PyObject *args, PyObject *kwds
         self->timer = new uv_timer_t;
         uv_timer_init(self->loop, self->timer);
         self->timer->data = self;
+
+        self->sig = new uv_signal_t;
+        uv_signal_init(self->loop, self->sig);
+        self->sig->data = self;
+
+        uv_signal_start(self->sig, [](uv_signal_t *sig, int signum) {
+            //printf("We got sigint\n");
+
+            SelectorObject *self = (SelectorObject *) sig->data;
+
+            self->thrw = true;
+        }, SIGINT);
 
         PyStructSequence_Field fields[] = {
             {"fileobj", "doc"},

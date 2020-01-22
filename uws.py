@@ -1,6 +1,7 @@
 import asyncio
 import uwebsocketspy
 
+# We expose our own event loop for use with asyncio
 class Loop(asyncio.SelectorEventLoop):
 	def __init__(self):
 		self.selector = uwebsocketspy.Selector()

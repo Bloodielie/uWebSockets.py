@@ -39,7 +39,7 @@ app.listen(3000, listenHandler)
 
 #### Ready all thrusters
 
-* `pip install uWebSockets.py` no compiler needed, installs without any dependencies. Integrates seamlessly.
+* `pip install uws` no compiler needed, has no dependencies. Integrates seamlessly with Python 3.6+.
 
 For a performance reference, consider [Japronto performance graph](https://github.com/squeaky-pl/japronto#performance), then the following graph:
 

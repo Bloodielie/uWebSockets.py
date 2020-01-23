@@ -16,25 +16,28 @@
 `µWebSockets.py` is an ultra fast and standards compliant Http/WebSockets server/broker/router available to JavaScript developers since 2016, now also Python developers (hello handsome!). It is written entirely in C++ and integrates seamlessly with any `asyncio` project by plugging the elegant Python interpreter with its own `Selector` implementation.
 
 ```python
-app = uWS.App()
+import uws
+import asyncio
 
-def httpGet(res, req):
-	res.end("Sorry, no HTTP for you this time")
+# Integrate with asyncio
+asyncio.set_event_loop(uws.Loop())
 
-app.get("/*", httpGet)
+app = uws.App({
+        "some": "option"
+})
 
-def wsMessage(ws, message, isBinary):
-	ws.send(message)
+def getHandler(res, req):
+	res.end("Hello Python!")
 
-app.ws("/*", {
-	"maxPayloadLength": 1024,
-	"message": wsMessage
-});
+app.get("/*", getHandler)
 
 def listenHandler():
         print("Listening to port 3000")
 
 app.listen(3000, listenHandler)
+
+# Run asyncio event loop
+asyncio.get_event_loop().run_forever()
 ```
 
 #### Ready all thrusters

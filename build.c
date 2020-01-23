@@ -33,9 +33,9 @@ struct node_version {
     char *name;
     char *abi;
 } versions[] = {
-    {"3.8.1", "64"},
-    {"3.7.6", "67"},
-    {"3.6.10", "72"},
+    {"3.8.1", "38"},
+    {"3.7.6", "37"},
+    {"3.6.10", "36"},
     //{"3.5.9", "79"} // does not have fastcall
 };
 
@@ -46,7 +46,9 @@ void build(char *compiler, char *cpp_compiler, char *cpp_linker, char *os, char 
 
     /* Build for the different versions */
     for (unsigned int i = 0; i < sizeof(versions) / sizeof(struct node_version); i++) {
-        run("g++ -std=c++17 -shared -O3 -flto -fPIC -DUWS_NO_ZLIB -static-libstdc++ -static-libgcc -s -I ABIs -I ABIs/%s -I uWebSockets/uSockets/src -I uWebSockets/src src/extension.cpp uWebSockets/uSockets/uSockets.a -luv -o internal_%s.so", versions[i].name, versions[i].name);
+        run("mkdir -p dist/%s", versions[i].abi);
+        run("cp src/uws.py dist/%s/uws.py", versions[i].abi);
+        run("g++ -std=c++17 -shared -O3 -flto -fPIC -DUWS_NO_ZLIB -static-libstdc++ -static-libgcc -s -I ABIs -I ABIs/%s -I uWebSockets/uSockets/src -I uWebSockets/src src/extension.cpp uWebSockets/uSockets/uSockets.a -luv -o dist/%s/uwebsocketspy.so", versions[i].name, versions[i].abi);
     }
 }
 

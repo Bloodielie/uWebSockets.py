@@ -5,6 +5,8 @@
  * but I took the config from my Clear Linux on x64 and I hope these
  * are pretty much standard for x64 Intel */
 
+#define _POSIX_THREADS
+
 #define SIZEOF_DOUBLE 8
 #define SIZEOF_FLOAT 4
 #define SIZEOF_FPOS_T 16

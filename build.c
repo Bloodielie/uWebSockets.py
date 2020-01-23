@@ -41,14 +41,17 @@ struct node_version {
 
 /* Build for Unix systems */
 void build(char *compiler, char *cpp_compiler, char *cpp_linker, char *os, char *arch) {
+    /* Build libuv */
+    run("cd libuv && ./autogen.sh && CFLAGS=-fPIC ./configure --enable-shared=false && make");
+
     /* Build uSockets.a */
-    run("WITH_LIBUV=1 make -C uWebSockets/uSockets");
+    run("CFLAGS=\"-I ../../libuv/include\" WITH_LIBUV=1 make -C uWebSockets/uSockets");
 
     /* Build for the different versions */
     for (unsigned int i = 0; i < sizeof(versions) / sizeof(struct node_version); i++) {
         run("mkdir -p dist/%s", versions[i].abi);
         run("cp src/uws.py dist/%s/uws.py", versions[i].abi);
-        run("g++ -std=c++17 -shared -O3 -flto -fPIC -DUWS_NO_ZLIB -static-libstdc++ -static-libgcc -s -I ABIs -I ABIs/%s -I uWebSockets/uSockets/src -I uWebSockets/src src/extension.cpp uWebSockets/uSockets/uSockets.a -luv -o dist/%s/uwebsocketspy.so", versions[i].name, versions[i].abi);
+        run("g++ -I libuv/include -std=c++17 -shared -O3 -flto -fPIC -DUWS_NO_ZLIB -static-libstdc++ -static-libgcc -s -I ABIs -I ABIs/%s -I uWebSockets/uSockets/src -I uWebSockets/src src/extension.cpp uWebSockets/uSockets/uSockets.a libuv/.libs/libuv.a -o dist/%s/uwebsocketspy.so", versions[i].name, versions[i].abi);
     }
 }
 

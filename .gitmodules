@@ -1,3 +1,6 @@
 [submodule "uWebSockets"]
 	path = uWebSockets
 	url = https://github.com/uNetworking/uWebSockets.git
+[submodule "libuv"]
+	path = libuv
+	url = https://github.com/libuv/libuv.git

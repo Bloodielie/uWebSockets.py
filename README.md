@@ -40,11 +40,11 @@ asyncio.get_event_loop().run_forever()
 
 #### Ready all thrusters
 
-* `pip install uws` no compiler needed, has no dependencies. Integrates seamlessly with Python 3.6+.
-
-For a performance reference, consider [Japronto performance graph](https://github.com/squeaky-pl/japronto#performance), then the following graph:
+* `pip install uws` no compiler needed, no dependencies. Integrates seamlessly with Python 3.6+ `asyncio`.
 
 ![](misc/perf.png)
+
+*For a performance reference, consider [Japronto performance graph](https://github.com/squeaky-pl/japronto#performance), then the above graph. We are significantly faster than both Japronto and Bjoern, while also being much more feature complete and secure.*
 
 #### Pay what you want.
 Commercially developed on a sponsored/consulting basis; BitMEX, Bitfinex and Coinbase are current or previous sponsors. Contact [me, the author](https://github.com/alexhultman) for support, feature development or consulting/contracting.

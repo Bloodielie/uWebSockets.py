@@ -3,9 +3,19 @@ name: C/C++ CI
 on: [push]
 
 jobs:
-  build:
+  build_linux:
 
     runs-on: ubuntu-latest
+    
+    steps:
+    - name: checkout
+      run: git clone --recursive https://github.com/uNetworking/uWebSockets.py.git
+    - name: build
+      run: make -C uWebSockets.py
+      
+  build_macos:
+
+    runs-on: macos-latest
     
     steps:
     - name: checkout

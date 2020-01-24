@@ -40,18 +40,18 @@ struct node_version {
 };
 
 /* Build for Unix systems */
-void build(char *compiler, char *cpp_compiler, char *cpp_linker, char *os, char *arch) {
-    /* Build libuv */
-    run("cd libuv && ./autogen.sh && CFLAGS=-fPIC ./configure --enable-shared=false && make");
+void build(char *cflags, char *cxxflags, char *ldflags, char *os, char *arch) {
+    /* Build libuv passing CFLAGS */
+    run("cd libuv && ./autogen.sh && CFLAGS=-fPIC %s ./configure --enable-shared=false && make", cflags);
 
-    /* Build uSockets.a */
-    run("CFLAGS=\"-I ../../libuv/include\" WITH_LIBUV=1 make -C uWebSockets/uSockets");
+    /* Build uSockets.a passing CFLAGS */
+    run("CFLAGS=\"-I ../../libuv/include %s\" WITH_LIBUV=1 make -C uWebSockets/uSockets", cflags);
 
-    /* Build for the different versions */
+    /* Build for the different versions passing CFLAGS, CXXFLAGS, LDFLAGS */
     for (unsigned int i = 0; i < sizeof(versions) / sizeof(struct node_version); i++) {
         run("mkdir -p dist/%s", versions[i].abi);
         run("cp src/uws.py dist/%s/uws.py", versions[i].abi);
-        run("g++ -I libuv/include -std=c++17 -shared -O3 -flto -fPIC -DUWS_NO_ZLIB -static-libstdc++ -static-libgcc -s -I ABIs -I ABIs/%s -I uWebSockets/uSockets/src -I uWebSockets/src src/extension.cpp uWebSockets/uSockets/uSockets.a libuv/.libs/libuv.a -o dist/%s/uwebsocketspy.so", versions[i].name, versions[i].abi);
+        run("g++ %s %s -I libuv/include -std=c++17 -shared -O3 -flto -fPIC -DUWS_NO_ZLIB %s -I ABIs -I ABIs/%s -I uWebSockets/uSockets/src -I uWebSockets/src src/extension.cpp uWebSockets/uSockets/uSockets.a libuv/.libs/libuv.a -o dist/%s/uwebsocketspy.so", cflags, cxxflags, ldflags, versions[i].name, versions[i].abi);
     }
 }
 
@@ -60,15 +60,15 @@ int main() {
 
 #ifdef IS_MACOS
     /* Apple special case */
-    build("clang -mmacosx-version-min=10.7",
-          "clang++ -stdlib=libc++ -mmacosx-version-min=10.7",
+    build("-mmacosx-version-min=10.7",
+          "-stdlib=libc++",
           "-undefined dynamic_lookup",
           OS,
           "x64");
 #else
     /* Linux */
-    build("clang",
-          "clang++",
+    build("",
+          "",
           "-static-libstdc++ -static-libgcc -s",
           OS,
           "x64");

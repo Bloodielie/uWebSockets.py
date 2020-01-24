@@ -16,7 +16,7 @@ static PyObject *WebSocket_send(WebSocketObject *self, PyObject **args, int narg
 	// string to utf8
 	Py_ssize_t size;
 	const char *str = PyUnicode_AsUTF8AndSize(pythonMessage, &size);
-	std::string_view message(str, size);
+	std::string_view message(str, (size_t) size);
 
     // bara om redan utf8
     //auto *utf8 = PyUnicode_DATA(pythonMessage);

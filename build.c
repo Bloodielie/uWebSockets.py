@@ -42,7 +42,7 @@ struct node_version {
 /* Build for Unix systems */
 void build(char *cflags, char *cxxflags, char *ldflags, char *os, char *arch) {
     /* Build libuv passing CFLAGS */
-    run("cd libuv && ./autogen.sh && CFLAGS=-fPIC %s ./configure --enable-shared=false && make", cflags);
+    run("cd libuv && ./autogen.sh && CFLAGS=\"-fPIC %s\" ./configure --enable-shared=false && make", cflags);
 
     /* Build uSockets.a passing CFLAGS */
     run("CFLAGS=\"-I ../../libuv/include %s\" WITH_LIBUV=1 make -C uWebSockets/uSockets", cflags);

@@ -21,6 +21,6 @@ jobs:
     - name: checkout
       run: git clone --recursive https://github.com/uNetworking/uWebSockets.py.git
     - name: install autotools
-      run: brew install autoconf automake
+      run: brew install libtool autoconf automake
     - name: build
       run: make -C uWebSockets.py

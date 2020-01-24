@@ -20,5 +20,7 @@ jobs:
     steps:
     - name: checkout
       run: git clone --recursive https://github.com/uNetworking/uWebSockets.py.git
+    - name: install autotools
+      run: brew install autoconf automake
     - name: build
       run: make -C uWebSockets.py

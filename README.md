@@ -1,5 +1,3 @@
-# work in progress, come back in a month
-
 <div align="center">
 <img src="misc/logo.svg" height="180" />
 
@@ -13,7 +11,7 @@
 
 #### In a nutshell
 
-`µWebSockets.py` is an ultra fast and standards compliant Http/WebSockets server/broker/router available to JavaScript developers since 2016, now also Python developers (hello handsome!). It is written entirely in C++ and integrates seamlessly with any `asyncio` project by plugging the elegant Python interpreter with its own `Selector` implementation.
+`µWebSockets.py` is a standards compliant Http & WebSockets server with router & pubsub support. It is significantly faster than both `Japronto` & `Bjoern` and has been available to JavaScript developers since 2016. It is written entirely in C++ and integrates seamlessly with any `asyncio` project by plugging the elegant Python interpreter with its own `Selector` implementation.
 
 ```python
 import uws

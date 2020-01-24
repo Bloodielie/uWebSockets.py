@@ -24,3 +24,7 @@ jobs:
       run: brew install libtool autoconf automake
     - name: build
       run: make -C uWebSockets.py
+    - uses: actions/upload-artifact@v1
+      with:
+        name: macOS-binaries
+        path: uWebSockets.py/dist

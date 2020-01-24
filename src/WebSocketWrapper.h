@@ -25,7 +25,7 @@ static PyObject *WebSocket_send(WebSocketObject *self, PyObject **args, int narg
     //Py_buffer *buffer = PyMemoryView_GET_BUFFER(pythonMessage);
 	//self->ws->send({(char *) buffer->buf, buffer->len}, uWS::OpCode::TEXT);
 
-    self->ws->send({str, size}, uWS::OpCode::TEXT);
+    self->ws->send({str, (size_t) size}, uWS::OpCode::TEXT);
 
     Py_INCREF(Py_None);
 	return Py_None;

@@ -376,6 +376,10 @@ static PyObject *Selector_new(PyTypeObject *type, PyObject *args, PyObject *kwds
         /* Create selectorKey type object */
         self->namedTuple = PyStructSequence_NewType(&desc);
 
+        /* Fix for Python 3.7- that probably should do it */
+        self->namedTuple->tp_flags |= Py_TPFLAGS_HEAPTYPE;
+        PyType_Modified(self->namedTuple);
+
         self->tick = false;
 
         /* The uv_loop_t points to self in userdata */

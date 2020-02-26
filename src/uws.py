@@ -8,9 +8,9 @@ class Loop(asyncio.SelectorEventLoop):
 		super().__init__(self.selector)
 	def call_soon(self, *args, **kwargs):
 		self.selector.tick();
-		return super().call_soon(*args, **kwargs);
+		return super().call_soon(*args, **kwargs)
 	def call_at(self, *args, **kwargs):
 		self.selector.tick();
-		return super().call_at(*args, **kwargs);
+		return super().call_at(*args, **kwargs)
 
 App = uwebsocketspy.App

@@ -1,4 +1,4 @@
-# PYTHONPATH=. python examples/WebSockets.py
+# PYTHONPATH=. python examples/MiniChat.py
 import uws
 import asyncio
 
@@ -8,14 +8,14 @@ asyncio.set_event_loop(uws.Loop())
 app = uws.App()
 
 def wsOpen(ws, req):
-    print("WebSocket opened!");
+    print("WebSocket opened!")
 
 def wsMessage(ws, message, isBinary):
     print('Incoming Message: ',message)
     ws.send('Echo '+message)
 
 def wsClose(ws, code, message):
-    print("WebSocket closed!");
+    print("WebSocket closed!")
 
 app.ws("/soc", {
     "maxPayloadLength": 1024,

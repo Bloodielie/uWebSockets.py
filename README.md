@@ -1,3 +1,8 @@
+**Update 2020-06-16** I'm still considering this project. All technical issues are solved and we experience incredibly nice performances so the remaining parts are wrapping up everything and polishing it for release. I'm not going to start on that until other things I have prioritized are done. So this means the project will be idle for a few months, and then I'll hopefully finish this thing up.
+
+You can help by letting people know about the project and showcase the performance.
+
+
 <div align="center">
 <img src="misc/logo.svg" height="180" />
 
